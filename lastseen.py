@@ -7,6 +7,7 @@ USAGE_STR = 'Nick not specified. (usage: !last_seen <nick>)'
 
 
 class LastSeen(BotPlugin):
+
     def activate(self):
         super(LastSeen, self).activate()
         try:
@@ -43,4 +44,3 @@ class LastSeen(BotPlugin):
             return 'We have not seen {} yet.'.format(user)
 
         return '{} was last seen on {}.'.format(user, when)
-
