@@ -1,5 +1,4 @@
 import re
-import sys
 from datetime import datetime
 from errbot import BotPlugin, botcmd, re_botcmd
 
@@ -16,7 +15,6 @@ class LastSeen(BotPlugin):
         except KeyError:
             self['last_seen'] = {}
 
-
     @re_botcmd(pattern=r'^', prefixed=False, flags=re.IGNORECASE)
     def update_last_seen(self, msg, match):
         user = str(msg.frm).split('!')[0]
@@ -25,7 +23,6 @@ class LastSeen(BotPlugin):
         last_seens = self['last_seen']
         last_seens[user] = time
         self['last_seen'] = last_seens
-
 
     @botcmd
     def last_seen(self, msg, args):
@@ -42,7 +39,8 @@ class LastSeen(BotPlugin):
 
         try:
             when = last_seens[user].strftime("%d-%m-%Y %H:%M")
-        except KeyError:    
+        except KeyError:
             return 'We have not seen {} yet.'.format(user)
 
         return '{} was last seen on {}.'.format(user, when)
+

@@ -7,3 +7,4 @@ Description = Track when user was last seen in irc channel.
 
 [Python]
 Version = 2+
+
