@@ -1,9 +1,9 @@
 [Core]
 Name = LastSeen
-Module = LastSeen
+Module = lastseen 
 
 [Documentation]
-Description = Track when user was last seen in irc channel.
+Description = Track when user was last seen.
 
 [Python]
 Version = 2+

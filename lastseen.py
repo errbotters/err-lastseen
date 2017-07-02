@@ -1,12 +1,24 @@
-import re
 from datetime import datetime
-from errbot import BotPlugin, botcmd, re_botcmd
-
+from errbot import BotPlugin, botcmd
 
 USAGE_STR = 'Nick not specified. (usage: !last_seen <nick>)'
+CONFIG_TEMPLATE = {
+    # locale-preffered format is default
+    'TIME_FORMAT': '%c'
+}
 
 
 class LastSeen(BotPlugin):
+    def configure(self, configuration):
+        if configuration is not None and configuration != {}:
+            config = dict(chain(CONFIG_TEMPLATE.items(),
+                                configuration.items()))
+        else:
+            config = CONFIG_TEMPLATE
+        super(LastSeen, self).configure(config)
+
+    def get_configuration_template(self):
+        return CONFIG_TEMPLATE
 
     def activate(self):
         super(LastSeen, self).activate()
@@ -16,13 +28,14 @@ class LastSeen(BotPlugin):
         except KeyError:
             self['last_seen'] = {}
 
-    @re_botcmd(pattern=r'^', prefixed=False, flags=re.IGNORECASE)
-    def update_last_seen(self, msg, match):
-        user = str(msg.frm).split('!')[0]
-        time = datetime.now()
-
+    def callback_message(self, msg):
+        user = msg.nick
         last_seens = self['last_seen']
-        last_seens[user] = time
+
+        last_seens[user] = {}
+        last_seens[user]['time'] = datetime.now()
+        last_seens[user]['msg'] = msg.body
+
         self['last_seen'] = last_seens
 
     @botcmd
@@ -39,8 +52,30 @@ class LastSeen(BotPlugin):
         user = args.split(' ')[0]
 
         try:
-            when = last_seens[user].strftime("%d-%m-%Y %H:%M")
+            time = last_seens[user]['time']
+            text = last_seens[user]['msg']
+
+            timedelta = datetime.now() - time
+            if timedelta.days == 0:
+                hours = timedelta.seconds // 3600
+                minutes = (timedelta.seconds - (hours * 3600)) // 60
+
+                min_format = 'minute' if minutes == 1 else 'minutes'
+                if hours > 0:
+                    hour_format = 'hour' if hours == 1 else 'hours'
+
+                    params = [user, hours, hour_format, minutes, min_format,
+                              text]
+                    msg = '{} was last seen {} {} and {} {} ago, saying "{}".'
+                    return msg.format(*params)
+
+                params = [user, minutes, min_format, text]
+                msg = '{} was last seen {} {} ago, saying "{}".'
+                return msg.format(*params)
+
         except KeyError:
             return 'We have not seen {} yet.'.format(user)
 
-        return '{} was last seen on {}.'.format(user, when)
+        form = self.config['TIME_FORMAT']
+        time = time.strftime(form)
+        return '{} was last seen on {}, saying "{}".'.format(user, time, text)
