@@ -1,3 +1,4 @@
+from itertools import chain
 from datetime import datetime
 from errbot import BotPlugin, botcmd
 
