@@ -40,20 +40,25 @@ class LastSeen(BotPlugin):
 
         self['last_seen'] = last_seens
 
-    def get_msg(self, timedelta, user, text):
-        hours = timedelta.seconds // 3600
-        minutes = (timedelta.seconds - (hours * 3600)) // 60
-        min_format = 'minute' if minutes == 1 else 'minutes'
+    def generate_seen_message(self, timedelta, user, time, text):
+        if timedelta.days == 0:
+            hours = timedelta.seconds // 3600
+            minutes = (timedelta.seconds - (hours * 3600)) // 60
+            min_format = 'minute' if minutes == 1 else 'minutes'
 
-        if hours > 0:
-            hour_format = 'hour' if hours == 1 else 'hours'
-            params = [user, hours, hour_format, minutes, min_format, text]
-            msg = '{} was last seen {} {} and {} {} ago, saying "{}".'
+            if hours > 0:
+                hour_format = 'hour' if hours == 1 else 'hours'
+                params = [user, hours, hour_format, minutes, min_format, text]
+                msg = '{} was last seen {} {} and {} {} ago, saying "{}".'
+                return msg.format(*params)
+
+            params = [user, minutes, min_format, text]
+            msg = '{} was last seen {} {} ago, saying "{}".'
             return msg.format(*params)
 
-        params = [user, minutes, min_format, text]
-        msg = '{} was last seen {} {} ago, saying "{}".'
-        return msg.format(*params)
+        form = self.config['TIME_FORMAT']
+        time = time.strftime(form)
+        return '{} was last seen on {}, saying "{}".'.format(user, time, text)
 
     @botcmd(split_args_with=' ')
     def last_seen(self, msg, args):
@@ -68,20 +73,15 @@ class LastSeen(BotPlugin):
             return USAGE_STR
         user = args[0]
 
-        try:
-            max_chars = self.config['MAX_CHARS']
-            time = last_seens[user]['time']
-            text = last_seens[user]['msg']
-            if len(text) > max_chars:
-                text = text[:max_chars] + '...'
-
-            timedelta = datetime.now() - time
-            if timedelta.days == 0:
-                return self.get_msg(timedelta, user, text)
-
-        except KeyError:
+        if not user in last_seens:
             return 'We have not seen {} yet.'.format(user)
 
-        form = self.config['TIME_FORMAT']
-        time = time.strftime(form)
-        return '{} was last seen on {}, saying "{}".'.format(user, time, text)
+        max_chars = self.config['MAX_CHARS']
+        time = last_seens[user]['time']
+        text = last_seens[user]['msg']
+        timedelta = datetime.now() - time
+
+        if len(text) > max_chars:
+            text = text[:max_chars] + '...'
+
+        return self.generate_seen_message(timedelta, user, time, text)
