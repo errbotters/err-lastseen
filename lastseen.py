@@ -5,7 +5,8 @@ from errbot import BotPlugin, botcmd
 USAGE_STR = 'Nick not specified. (usage: !last_seen <nick>)'
 CONFIG_TEMPLATE = {
     # locale-preffered format is default
-    'TIME_FORMAT': '%c'
+    'TIME_FORMAT': '%c',
+    'MAX_CHARS': 40
 }
 
 
@@ -39,7 +40,22 @@ class LastSeen(BotPlugin):
 
         self['last_seen'] = last_seens
 
-    @botcmd
+    def get_msg(self, timedelta, user, text):
+        hours = timedelta.seconds // 3600
+        minutes = (timedelta.seconds - (hours * 3600)) // 60
+        min_format = 'minute' if minutes == 1 else 'minutes'
+
+        if hours > 0:
+            hour_format = 'hour' if hours == 1 else 'hours'
+            params = [user, hours, hour_format, minutes, min_format, text]
+            msg = '{} was last seen {} {} and {} {} ago, saying "{}".'
+            return msg.format(*params)
+
+        params = [user, minutes, min_format, text]
+        msg = '{} was last seen {} {} ago, saying "{}".'
+        return msg.format(*params)
+
+    @botcmd(split_args_with=' ')
     def last_seen(self, msg, args):
         """Return last activity and its time of given user.
 
@@ -50,29 +66,18 @@ class LastSeen(BotPlugin):
 
         if len(args) < 1:
             return USAGE_STR
-        user = args.split(' ')[0]
+        user = args[0]
 
         try:
+            max_chars = self.config['MAX_CHARS']
             time = last_seens[user]['time']
             text = last_seens[user]['msg']
+            if len(text) > max_chars:
+                text = text[:max_chars] + '...'
 
             timedelta = datetime.now() - time
             if timedelta.days == 0:
-                hours = timedelta.seconds // 3600
-                minutes = (timedelta.seconds - (hours * 3600)) // 60
-
-                min_format = 'minute' if minutes == 1 else 'minutes'
-                if hours > 0:
-                    hour_format = 'hour' if hours == 1 else 'hours'
-
-                    params = [user, hours, hour_format, minutes, min_format,
-                              text]
-                    msg = '{} was last seen {} {} and {} {} ago, saying "{}".'
-                    return msg.format(*params)
-
-                params = [user, minutes, min_format, text]
-                msg = '{} was last seen {} {} ago, saying "{}".'
-                return msg.format(*params)
+                return self.get_msg(timedelta, user, text)
 
         except KeyError:
             return 'We have not seen {} yet.'.format(user)
