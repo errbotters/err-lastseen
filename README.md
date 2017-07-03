@@ -1,2 +1,2 @@
 # err-lastseen
-A plugin for Errbot which tells you when user was last seen in irc chat.
+A plugin for Errbot which tracks when user was last seen.
