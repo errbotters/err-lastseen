@@ -6,7 +6,7 @@ USAGE_STR = 'Nick not specified. (usage: !last_seen <nick>)'
 CONFIG_TEMPLATE = {
     # locale-preffered format is default
     'TIME_FORMAT': '%c',
-    'MAX_CHARS': 40
+    'SEEN_MSG_MAX_CHARS': 40
 }
 
 
@@ -73,10 +73,10 @@ class LastSeen(BotPlugin):
             return USAGE_STR
         user = args[0]
 
-        if not user in last_seens:
+        if user not in last_seens:
             return 'We have not seen {} yet.'.format(user)
 
-        max_chars = self.config['MAX_CHARS']
+        max_chars = self.config['SEEN_MSG_MAX_CHARS']
         time = last_seens[user]['time']
         text = last_seens[user]['msg']
         timedelta = datetime.now() - time
