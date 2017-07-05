@@ -1,0 +1,10 @@
+[Core]
+Name = LastSeen
+Module = lastseen 
+
+[Documentation]
+Description = Track when user was last seen.
+
+[Python]
+Version = 2+
+
